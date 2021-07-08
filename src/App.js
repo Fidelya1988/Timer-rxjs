@@ -14,8 +14,8 @@ import {
 const secondsObserv = interval(1000);
 const minutesObserv = interval(50 * 60);
 const hoursObserv = interval(50 * 60 * 60);
-const clickWait$ = fromEvent(document, "click");
-// const clickContinue$ = fromEvent(document, 'click')
+
+
 const getTimeUnits = (timeUnits) => {
   return timeUnits.pipe(
     take(60),
@@ -26,7 +26,11 @@ const getTimeUnits = (timeUnits) => {
 
 const useObservable = (observable, setter, isRunning, h) => {
   useEffect(() => {
-    const subscription = observable.pipe(takeUntil(h)).subscribe((result) => {
+    const wait$ = fromEvent(
+      document.getElementById('wait'),
+      'click'
+    )
+    const subscription = observable.pipe(takeUntil(wait$)).subscribe((result) => {
       setter(result);
       if (!isRunning) {
         subscription.unsubscribe();
@@ -38,17 +42,17 @@ const useObservable = (observable, setter, isRunning, h) => {
 };
 
 const App = () => {
+
   const [second, setseconds] = useState(0);
   const [minute, setMinutes] = useState(0);
   const [hour, setHours] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
-  const buttonWait = React.createRef();
-  console.log(buttonWait);
-  const w = fromEvent(document, "click");
+  с
 
-  useObservable(getTimeUnits(secondsObserv), setseconds, isRunning, w);
-  useObservable(getTimeUnits(minutesObserv), setMinutes, isRunning, w);
-  useObservable(getTimeUnits(hoursObserv), setHours, isRunning, w);
+
+  useObservable(getTimeUnits(secondsObserv), setseconds, isRunning);
+  useObservable(getTimeUnits(minutesObserv), setMinutes, isRunning);
+  useObservable(getTimeUnits(hoursObserv), setHours, isRunning);
 
   return (
     <div className="App">
@@ -73,10 +77,7 @@ const App = () => {
             Stop
           </button>
         )}
-        <button
-        ref = {buttonWait}
-         
-        >
+        <button id='wait'>
           Wait
         </button>
         <button >Reset</button>
