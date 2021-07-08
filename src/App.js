@@ -9,12 +9,12 @@ import {
   repeat,
   repeatWhen,
   takeUntil,
+  switchMap,
 } from "rxjs/operators";
 
 const secondsObserv = interval(1000);
 const minutesObserv = interval(50 * 60);
 const hoursObserv = interval(50 * 60 * 60);
-
 
 const getTimeUnits = (timeUnits) => {
   return timeUnits.pipe(
@@ -24,35 +24,37 @@ const getTimeUnits = (timeUnits) => {
   );
 };
 
-const useObservable = (observable, setter, isRunning, h) => {
+const useObservable = (observable, setter, setIsRunning) => {
   useEffect(() => {
-    const wait$ = fromEvent(
-      document.getElementById('wait'),
-      'click'
-    )
-    const subscription = observable.pipe(takeUntil(wait$)).subscribe((result) => {
-      setter(result);
-      if (!isRunning) {
-        subscription.unsubscribe();
-      }
-    });
+    // const wait$ = fromEvent(document.getElementById("wait"), "click");
 
+    // const subscription = observable.subscribe((result) => {
+    //   setter(result);
+    //   if (!isRunning) {
+    //     subscription.unsubscribe();
+    //   }
+    // });
+    const start$ = fromEvent(document.getElementById("start"), "click").pipe(
+      switchMap((e) => observable)
+    );
+    const subscription = start$.subscribe((result) => {
+      setter(result)
+      setIsRunning(true)
+    });
     return () => subscription.unsubscribe();
-  }, [isRunning]);
+  }, []);
 };
 
 const App = () => {
-
   const [second, setseconds] = useState(0);
   const [minute, setMinutes] = useState(0);
   const [hour, setHours] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
-  с
+  const [isWaiting, setIsWaiting] = useState(false);
 
-
-  useObservable(getTimeUnits(secondsObserv), setseconds, isRunning);
-  useObservable(getTimeUnits(minutesObserv), setMinutes, isRunning);
-  useObservable(getTimeUnits(hoursObserv), setHours, isRunning);
+  useObservable(getTimeUnits(secondsObserv), setseconds, setIsRunning);
+  useObservable(getTimeUnits(minutesObserv), setMinutes, setIsRunning);
+  useObservable(getTimeUnits(hoursObserv), setHours, setIsRunning);
 
   return (
     <div className="App">
@@ -60,27 +62,23 @@ const App = () => {
       <span>{minute < 10 ? `0${minute}` : minute} : </span>
       <span>{second < 10 ? "0" + second : second} </span>
       <div>
-        {!isRunning ? (
-          <button
-            onClick={() => {
-              setIsRunning(true);
-            }}
-          >
-            Start
-          </button>
-        ) : (
-          <button
-            onClick={() => {
-              setIsRunning(false);
-            }}
-          >
-            Stop
-          </button>
-        )}
-        <button id='wait'>
+        <button id='start'
+          onClick={() => {
+            // isRunning ? setIsRunning(false) : setIsRunning(true);
+          }}
+        >
+          {isRunning ? "Stop" : "Start"}
+        </button>
+
+        <button
+          id="wait"
+          onClick={() => {
+            setIsWaiting(true);
+          }}
+        >
           Wait
         </button>
-        <button >Reset</button>
+        <button id="clickMe">Reset</button>
       </div>
     </div>
   );
