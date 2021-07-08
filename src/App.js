@@ -1,6 +1,13 @@
 import "./App.css";
 import React, { useState, useEffect } from "react";
-import { from, interval, fromEvent, Subject, fromEventPattern } from "rxjs";
+import {
+  from,
+  interval,
+  fromEvent,
+  Subject,
+  fromEventPattern,
+  takeWhen,
+} from "rxjs";
 import {
   map,
   delay,
@@ -10,6 +17,7 @@ import {
   repeatWhen,
   takeUntil,
   switchMap,
+  delayWhen,
 } from "rxjs/operators";
 
 const secondsObserv = interval(1000);
@@ -24,7 +32,7 @@ const getTimeUnits = (timeUnits) => {
   );
 };
 
-const useObservable = (observable, setter, setIsRunning) => {
+const useObservable = (observable, setter, setIsRunning, isRunning) => {
   useEffect(() => {
     // const wait$ = fromEvent(document.getElementById("wait"), "click");
 
@@ -34,14 +42,30 @@ const useObservable = (observable, setter, setIsRunning) => {
     //     subscription.unsubscribe();
     //   }
     // });
+
+    
     const start$ = fromEvent(document.getElementById("start"), "click").pipe(
       switchMap((e) => observable)
+    )
+    const sub2 = start$.subscribe((result) => {
+      setter(result);
+      setIsRunning(true);
+   
+        // if (!isRunning) {
+        //   sub2.unsubscribe();
+        // }
+      
+    })
+    const reset$ = fromEvent(document.getElementById("reset"), "click").pipe(
+      switchMap((e) => observable)
     );
-    const subscription = start$.subscribe((result) => {
-      setter(result)
-      setIsRunning(true)
+    const subscription = reset$.subscribe((result) => {
+      setter(result);
+      setIsRunning(true);
+      sub2.complete()
     });
-    return () => subscription.unsubscribe();
+    return () => {subscription.unsubscribe()
+    sub2.unsubscribe()};
   }, []);
 };
 
@@ -62,7 +86,8 @@ const App = () => {
       <span>{minute < 10 ? `0${minute}` : minute} : </span>
       <span>{second < 10 ? "0" + second : second} </span>
       <div>
-        <button id='start'
+        <button
+          id="start"
           onClick={() => {
             // isRunning ? setIsRunning(false) : setIsRunning(true);
           }}
@@ -78,7 +103,7 @@ const App = () => {
         >
           Wait
         </button>
-        <button id="clickMe">Reset</button>
+        <button id="reset">Reset</button>
       </div>
     </div>
   );
