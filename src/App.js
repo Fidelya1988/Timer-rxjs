@@ -1,6 +1,6 @@
 import "./App.css";
 import React, { useState, useEffect } from "react";
-import { from, interval } from "rxjs";
+import { from, interval, fromEvent, Subject } from "rxjs";
 import {
   map,
   delay,
@@ -8,13 +8,14 @@ import {
   take,
   repeat,
   repeatWhen,
-  fromEvent,
+  takeUntil,
 } from "rxjs/operators";
 
-const secondsObserv = interval(50);
+const secondsObserv = interval(1000);
 const minutesObserv = interval(50 * 60);
 const hoursObserv = interval(50 * 60 * 60);
-
+const clickWait$ = fromEvent(document, "click");
+// const clickContinue$ = fromEvent(document, 'click')
 const getTimeUnits = (timeUnits) => {
   return timeUnits.pipe(
     take(60),
@@ -23,14 +24,19 @@ const getTimeUnits = (timeUnits) => {
   );
 };
 
-const useObservable = (observable, setter) => {
+const useObservable = (observable, setter, isRunning) => {
   useEffect(() => {
-    const subscription = observable.subscribe((result) => {
-      setter(result);
-    });
+    const subscription = observable
+      .pipe(takeUntil(clickWait$))
+      .subscribe((result) => {
+        setter(result);
+        if (!isRunning) {
+          subscription.unsubscribe();
+        }
+      });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [isRunning]);
 };
 
 const App = () => {
@@ -38,11 +44,19 @@ const App = () => {
   const [minute, setMinutes] = useState(0);
   const [hour, setHours] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
+  const hanleClick = (e) => {
+    const el = e.target;
+    fromEvent(el, "click");
+  };
 
-  useObservable(getTimeUnits(secondsObserv), setseconds);
-  useObservable(getTimeUnits(minutesObserv), setMinutes);
-  useObservable(getTimeUnits(hoursObserv), setHours);
-
+  useObservable(getTimeUnits(secondsObserv), setseconds, isRunning);
+  useObservable(getTimeUnits(minutesObserv), setMinutes, isRunning);
+  useObservable(getTimeUnits(hoursObserv), setHours, isRunning);
+  const handleReset = () => {
+    setseconds(0);
+    setMinutes(0);
+    setHours(0);
+  };
   return (
     <div className="App">
       <span>{hour < 10 ? `0${hour}` : hour} : </span>
@@ -66,8 +80,14 @@ const App = () => {
             Stop
           </button>
         )}
-        <button>Wait</button>
-        <button>Reset</button>
+        <button
+          onClick={() => {
+            isRunning ? setIsRunning(false) : setIsRunning(true);
+          }}
+        >
+          Wait
+        </button>
+        <button onClick={handleReset}>Reset</button>
       </div>
     </div>
   );
