@@ -45,7 +45,7 @@ const App = () => {
   const buttonWait = React.createRef();
   console.log(buttonWait);
   const w = fromEvent(document, "click");
-  console.log(w);
+
   useObservable(getTimeUnits(secondsObserv), setseconds, isRunning, w);
   useObservable(getTimeUnits(minutesObserv), setMinutes, isRunning, w);
   useObservable(getTimeUnits(hoursObserv), setHours, isRunning, w);
