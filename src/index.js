@@ -3,10 +3,14 @@ import ReactDOM from 'react-dom';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
+import IntervalExample from './Test2';
+import WithRX from './WithRx';
 
 ReactDOM.render(
   <React.StrictMode>
     <App />
+ {/* <IntervalExample/> */}
+ {/* <WithRX/> */}
   </React.StrictMode>,
   document.getElementById('root')
 );
