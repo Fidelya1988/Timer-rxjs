@@ -1,6 +1,6 @@
 import "./App.css";
 import React, { useState, useEffect } from "react";
-import { from, interval, fromEvent, Subject } from "rxjs";
+import { from, interval, fromEvent, Subject, fromEventPattern } from "rxjs";
 import {
   map,
   delay,
@@ -24,16 +24,14 @@ const getTimeUnits = (timeUnits) => {
   );
 };
 
-const useObservable = (observable, setter, isRunning) => {
+const useObservable = (observable, setter, isRunning, h) => {
   useEffect(() => {
-    const subscription = observable
-      .pipe(takeUntil(clickWait$))
-      .subscribe((result) => {
-        setter(result);
-        if (!isRunning) {
-          subscription.unsubscribe();
-        }
-      });
+    const subscription = observable.pipe(takeUntil(h)).subscribe((result) => {
+      setter(result);
+      if (!isRunning) {
+        subscription.unsubscribe();
+      }
+    });
 
     return () => subscription.unsubscribe();
   }, [isRunning]);
@@ -44,19 +42,14 @@ const App = () => {
   const [minute, setMinutes] = useState(0);
   const [hour, setHours] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
-  const hanleClick = (e) => {
-    const el = e.target;
-    fromEvent(el, "click");
-  };
+  const buttonWait = React.createRef();
+  console.log(buttonWait);
+  const w = fromEvent(document, "click");
+  console.log(w);
+  useObservable(getTimeUnits(secondsObserv), setseconds, isRunning, w);
+  useObservable(getTimeUnits(minutesObserv), setMinutes, isRunning, w);
+  useObservable(getTimeUnits(hoursObserv), setHours, isRunning, w);
 
-  useObservable(getTimeUnits(secondsObserv), setseconds, isRunning);
-  useObservable(getTimeUnits(minutesObserv), setMinutes, isRunning);
-  useObservable(getTimeUnits(hoursObserv), setHours, isRunning);
-  const handleReset = () => {
-    setseconds(0);
-    setMinutes(0);
-    setHours(0);
-  };
   return (
     <div className="App">
       <span>{hour < 10 ? `0${hour}` : hour} : </span>
@@ -81,13 +74,12 @@ const App = () => {
           </button>
         )}
         <button
-          onClick={() => {
-            isRunning ? setIsRunning(false) : setIsRunning(true);
-          }}
+        ref = {buttonWait}
+         
         >
           Wait
         </button>
-        <button onClick={handleReset}>Reset</button>
+        <button >Reset</button>
       </div>
     </div>
   );
