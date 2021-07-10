@@ -1,122 +1,66 @@
-import "./App.css";
-import React, { useState, useEffect } from "react";
-import {
-  from,
-  interval,
-  fromEvent,
-  Subject,
-  fromEventPattern,
-  takeWhen,
-} from "rxjs";
-import {
-  map,
-  delay,
-  mergeMap,
-  take,
-  repeat,
-  repeatWhen,
-  takeUntil,
-  switchMap,
-  delayWhen,
-  mapTo,
- mergeWith,
- startWith
-} from "rxjs/operators";
 
-const secondsObserv = interval(1000);
-const minutesObserv = interval(50 * 60);
-const hoursObserv = interval(50 * 60 * 60);
-const getElem = (id) => document.getElementById(id);
+import React, {useEffect, useRef, useState} from 'react';
+import {fromEvent, interval, Subject} from 'rxjs';
+import {buffer, debounceTime, filter, map, takeUntil, tap} from "rxjs/operators";
 
-const fromClick = (id) => fromEvent(getElem(id), "click");
-const fromClickAndMapTo = (id, obj) => fromClick(id).pipe(mapTo(obj));
+ const App = () => {
 
-const setValue = (val) => (getElem("counter").innerText = val.toString());
+    const wait = useRef(null);
+    const [isPaused, setIsPaused] = useState(false);
+    const [ticker, setTicker] = useState(0);
+    const [isStarted, setIsStarted] = useState(false);
 
-const getTimeUnits = (timeUnits) => {
-  return timeUnits.pipe(
-    take(60),
-    repeat(),
-    mergeMap((val) => from([val]).pipe(delay((val) => val)))
-  );
-};
 
-const useObservable = (observable, setter, setIsRunning, isRunning) => {
-  useEffect(() => {
-    const events$ = mergeWith(
-      fromClickAndMapTo("start", { count: true }),
-      fromClickAndMapTo("wait", { count: false }),
-      fromClickAndMapTo("reset", { value: 0 })
-    );
+    useEffect(() => {
+        if (wait && wait.current) {
+            const click$ = fromEvent<Event>(wait.current, 'click');
+            const doubleClick$ = click$.pipe(
+                buffer(click$.pipe(debounceTime(300))),
+                map(clicks => clicks.length),
+                filter(length => length === 2),
+                tap(() => setIsPaused(true))
+            )
 
-    // const timer$ = events$().pipe(startWith({ count: false, speed: 1000, value: 0, countup: true, increase: 1 }))
-   
-  }, []);
-};
-// const start$ = fromEvent(document.getElementById("start"), "click").pipe(
-//   switchMap((e) => observable)
-// )
-// const sub2 = start$.subscribe((result) => {
-//   setter(result);
-//   setIsRunning(true);
+            const subscribe$ = new Subject();
+            interval(1000)
+                .pipe(
+                    takeUntil(subscribe$),
+                    takeUntil(doubleClick$)
+                )
+                .subscribe(() => {
+                    !isPaused && isStarted && setTicker(v => v + 1000)
+                });
 
-// if (!isRunning) {
-//   sub2.unsubscribe();
-// }
+            return () => {
+                subscribe$.next();
+                subscribe$.complete();
+            };
+        }
+    }, [isStarted, isPaused]);
 
-// })
-// const reset$ = fromEvent(document.getElementById("reset"), "click").pipe(
-//   switchMap((e) => observable)
-// );
-// const subscription = reset$.subscribe((result) => {
-//   setter(result);
-//   setIsRunning(true);
-//   sub2.complete()
-// });
-// return () => {subscription.unsubscribe()
-// sub2.unsubscribe()};
-//
-//   []);
-// };
+    const start = () => {
+        if (isPaused) {
+            setIsPaused(false)
+        } else {
+            setIsStarted(!isStarted);
+            setTicker(0)
+        }
+    }
 
-const App = () => {
-  const [second, setseconds] = useState(0);
-  // const [minute, setMinutes] = useState(0);
-  // const [hour, setHours] = useState(0);
-  const [isRunning, setIsRunning] = useState(false);
-  const [isWaiting, setIsWaiting] = useState(false);
+    const reset = () => {
+        setTicker(0);
+        setIsPaused(false)
+    }
 
-  useObservable(getTimeUnits(secondsObserv), setseconds, setIsRunning);
-  // useObservable(getTimeUnits(minutesObserv), setMinutes, setIsRunning);
-  // useObservable(getTimeUnits(hoursObserv), setHours, setIsRunning);
+    return <div className={'wrapper'}>
+        <h1>{new Date(ticker).toISOString().slice(11, 19)}</h1>
 
-  return (
-    <div className="App">
-      {/* <span>{hour < 10 ? `0${hour}` : hour} : </span>
-      <span>{minute < 10 ? `0${minute}` : minute} : </span> */}
-      <span>{second < 10 ? "0" + second : second} </span>
-      <div>
-        <button
-          id="start"
-          onClick={() => {
-            // isRunning ? setIsRunning(false) : setIsRunning(true);
-          }}
-        >
-          {isRunning ? "Stop" : "Start"}
-        </button>
-
-        <button
-          id="wait"
-          onClick={() => {
-            setIsWaiting(true);
-          }}
-        >
-          Wait
-        </button>
-        <button id="reset">Reset</button>
-      </div>
+        <div>
+            <button variant="contained" onClick={start}>Start/Stop</button>
+            <button variant="contained" ref={wait}>Wait</button>
+            <button variant="contained" onClick={reset}>Reset</button>
+        </div>
     </div>
-  );
-};
+}
 
-export default App;
+export default App
