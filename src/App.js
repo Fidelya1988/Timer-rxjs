@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import styles from "./app.module.css";
 import { fromEvent, interval, Subject, Observable } from "rxjs";
 import {
   buffer,
@@ -8,7 +9,7 @@ import {
   takeUntil,
   tap,
 } from "rxjs/operators";
-
+import Buttons from "./Buttons";
 
 const App = () => {
   const wait = useRef();
@@ -30,7 +31,7 @@ const App = () => {
       interval(1000)
         .pipe(takeUntil(subscribe$), takeUntil(doubleClick$))
         .subscribe(() => {
-          !isWaiting && isRunning && setTimer((v) => v + 1000);
+          !isWaiting && isRunning && setTimer((v) => v +1000);
         });
 
       return () => {
@@ -43,6 +44,7 @@ const App = () => {
   const start = () => {
     if (isWaiting) {
       setIsWaiting(false);
+   ;
     } else {
       setIsRunning(!isRunning);
       setTimer(0);
@@ -55,15 +57,17 @@ const App = () => {
   };
 
   return (
-    <div className={"wrapper"}>
-      <h1>{new Date(timer).toISOString().slice(11, 19)}</h1>
+    <div className={styles.timer}>
+      <p>{new Date(timer).toISOString().slice(11, 19)}</p>
 
       <div>
-        <button onClick={start}>
-          {!isRunning | isWaiting ? "Start" : "Stop"}
-        </button>
-        <button ref={wait}>Wait</button>
-        <button onClick={reset}>Reset</button>
+        <Buttons
+          isRunning={isRunning}
+          isWaiting={isWaiting}
+          start={start}
+          reset={reset}
+          wait={wait}
+        />
       </div>
     </div>
   );

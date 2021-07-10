@@ -8,9 +8,9 @@ import WithRX from './WithRx';
 
 ReactDOM.render(
   <React.StrictMode>
+
     <App />
- {/* <IntervalExample/> */}
- {/* <WithRX/> */}
+
   </React.StrictMode>,
   document.getElementById('root')
 );
