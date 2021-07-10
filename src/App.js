@@ -1,6 +1,6 @@
 
 import React, {useEffect, useRef, useState} from 'react';
-import {fromEvent, interval, Subject} from 'rxjs';
+import {fromEvent, interval, Subject, Observable} from 'rxjs';
 import {buffer, debounceTime, filter, map, takeUntil, tap} from "rxjs/operators";
 
  const App = () => {
@@ -21,7 +21,7 @@ import {buffer, debounceTime, filter, map, takeUntil, tap} from "rxjs/operators"
                 tap(() => setIsWaiting(true))
             )
 
-            const subscribe$ = new Subject();
+            const subscribe$ = new Observable();
             interval(1000)
                 .pipe(
                     takeUntil(subscribe$),
@@ -34,6 +34,7 @@ import {buffer, debounceTime, filter, map, takeUntil, tap} from "rxjs/operators"
             return () => {
                 subscribe$.next();
                 subscribe$.complete();
+                subscribe$.unsubscribe();
             };
         }
     }, [isRunning, isWaiting]);
