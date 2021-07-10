@@ -6,19 +6,19 @@ import {buffer, debounceTime, filter, map, takeUntil, tap} from "rxjs/operators"
  const App = () => {
 
     const wait = useRef(null);
-    const [isPaused, setIsPaused] = useState(false);
-    const [ticker, setTicker] = useState(0);
-    const [isStarted, setIsStarted] = useState(false);
+    const [isWaiting, setIsWaiting] = useState(false);
+    const [timer, setTimer] = useState(0);
+    const [isRunning, setIsRunning] = useState(false);
 
 
     useEffect(() => {
         if (wait && wait.current) {
-            const click$ = fromEvent<Event>(wait.current, 'click');
+            const click$ = fromEvent(wait.current, 'click');
             const doubleClick$ = click$.pipe(
                 buffer(click$.pipe(debounceTime(300))),
                 map(clicks => clicks.length),
                 filter(length => length === 2),
-                tap(() => setIsPaused(true))
+                tap(() => setIsWaiting(true))
             )
 
             const subscribe$ = new Subject();
@@ -28,7 +28,7 @@ import {buffer, debounceTime, filter, map, takeUntil, tap} from "rxjs/operators"
                     takeUntil(doubleClick$)
                 )
                 .subscribe(() => {
-                    !isPaused && isStarted && setTicker(v => v + 1000)
+                    !isWaiting && isRunning && setTimer(v => v + 1000)
                 });
 
             return () => {
@@ -36,29 +36,29 @@ import {buffer, debounceTime, filter, map, takeUntil, tap} from "rxjs/operators"
                 subscribe$.complete();
             };
         }
-    }, [isStarted, isPaused]);
+    }, [isRunning, isWaiting]);
 
     const start = () => {
-        if (isPaused) {
-            setIsPaused(false)
+        if (isWaiting) {
+            setIsWaiting(false)
         } else {
-            setIsStarted(!isStarted);
-            setTicker(0)
+            setIsRunning(!isRunning);
+            setTimer(0)
         }
     }
 
     const reset = () => {
-        setTicker(0);
-        setIsPaused(false)
+        setTimer(0);
+        setIsWaiting(false)
     }
 
     return <div className={'wrapper'}>
-        <h1>{new Date(ticker).toISOString().slice(11, 19)}</h1>
+        <h1>{new Date(timer).toISOString().slice(11, 19)}</h1>
 
         <div>
-            <button variant="contained" onClick={start}>Start/Stop</button>
-            <button variant="contained" ref={wait}>Wait</button>
-            <button variant="contained" onClick={reset}>Reset</button>
+            <button  onClick={start}>{!isRunning| isWaiting? 'Start' : 'Stop'}</button>
+            <button  ref={wait}>Wait</button>
+            <button  onClick={reset}>Reset</button>
         </div>
     </div>
 }
