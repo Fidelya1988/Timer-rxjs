@@ -18,6 +18,7 @@ export const useObservable = (
   setTimer
 ) => {
   useEffect(() => {
+    
     if (wait && wait.current) {
       const click$ = fromEvent(wait.current, "click");
       const doubleClick$ = click$.pipe(

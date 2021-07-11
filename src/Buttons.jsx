@@ -19,10 +19,9 @@ const useStyles = makeStyles((theme) => ({
     },
   },
 }));
-
-export default function Buttons({ isRunning, isWaiting, wait, reset, start }) {
+const Buttons = React.memo(({ isRunning, isWaiting, wait, reset, start }) => {
   const classes = useStyles();
-
+ 
   return (
     <div className={classes.root}>
       <ButtonGroup aria-label="outlined secondary button group">
@@ -38,4 +37,6 @@ export default function Buttons({ isRunning, isWaiting, wait, reset, start }) {
       </ButtonGroup>
     </div>
   );
-}
+});
+
+export default Buttons;
