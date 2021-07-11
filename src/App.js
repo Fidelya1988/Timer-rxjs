@@ -3,6 +3,7 @@ import styles from "./app.module.css";
 
 import Buttons from "./Buttons";
 import { useObservable } from "./useObservable";
+
 const App = () => {
   const wait = useRef();
   const [isWaiting, setIsWaiting] = useState(false);
@@ -11,7 +12,7 @@ const App = () => {
 
    useObservable(wait, setIsWaiting, isWaiting, isRunning, setTimer)
  
-   const start = () => {
+   const startHandler = () => {
     if (isWaiting) {
       setIsWaiting(false);
    ;
@@ -21,7 +22,7 @@ const App = () => {
     }
   };
 
-  const reset = () => {
+  const resetHandler = () => {
     setTimer(0);
     setIsWaiting(false);
   };
@@ -34,8 +35,8 @@ const App = () => {
         <Buttons
           isRunning={isRunning}
           isWaiting={isWaiting}
-          start={start}
-          reset={reset}
+          start={startHandler}
+          reset={resetHandler}
           wait={wait}
         />
       </div>
