@@ -10,13 +10,13 @@ const Ticker = ({ timer }) => {
 const App = React.memo(() => {
   console.log("render");
   const wait = useRef();
-  
+
   const [isWaiting, setIsWaiting] = useState(false);
   const [timer, setTimer] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
- 
+
   useObservable(wait, setIsWaiting, isWaiting, isRunning, setTimer);
-  
+
   const start = useCallback(() => {
     if (isWaiting) {
       setIsWaiting(false);
@@ -24,7 +24,7 @@ const App = React.memo(() => {
       setIsRunning(!isRunning);
       setTimer(0);
     }
-  }, []);
+  }, [isWaiting, isRunning]);
 
   const reset = useCallback(() => {
     setTimer(0);
