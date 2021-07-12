@@ -1,25 +1,72 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useEffect, useRef, useState } from "react";
+import { fromEvent, interval, Subject} from "rxjs";
+import {
+  buffer,
+  debounceTime,
+  filter,
+  map,
+  takeUntil,
+  tap,
+} from "rxjs/operators";
 
-function App() {
+
+const App = () => {
+  const wait = useRef();
+  const [isWaiting, setIsWaiting] = useState(false);
+  const [timer, setTimer] = useState(0);
+  const [isRunning, setIsRunning] = useState(false);
+
+  useEffect(() => {
+    if (wait && wait.current) {
+      const click$ = fromEvent(wait.current, "click");
+      const doubleClick$ = click$.pipe(
+        buffer(click$.pipe(debounceTime(300))),
+        map((clicks) => clicks.length),
+        filter((length) => length === 2),
+        tap(() => setIsWaiting(true))
+      );
+
+      const subscribe$ = new Subject();
+      interval(1000)
+        .pipe(takeUntil(subscribe$), takeUntil(doubleClick$))
+        .subscribe(() => {
+          !isWaiting && isRunning && setTimer((v) => v + 1000);
+        });
+
+      return () => {
+        subscribe$.next();
+        subscribe$.unsubscribe();
+      };
+    }
+  }, [isRunning, isWaiting]);
+
+  const start = () => {
+    if (isWaiting) {
+      setIsWaiting(false);
+    } else {
+      setIsRunning(!isRunning);
+      setTimer(0);
+    }
+  };
+
+  const reset = () => {
+    setTimer(0);
+    setIsWaiting(false);
+  };
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div className={"wrapper"}>
+      <h1>{new Date(timer).toISOString().slice(11, 19)}</h1>
+
+      <div>
+        <button onClick={start}>
+          {!isRunning | isWaiting ? "Start" : "Stop"}
+        </button>
+        <button ref={wait}>Wait</button>
+        <button onClick={reset}>Reset</button>
+      </div>
     </div>
   );
-}
+};
 
 export default App;
