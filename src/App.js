@@ -8,7 +8,7 @@ const Ticker = ({ timer }) => {
 };
 
 const App = React.memo(() => {
-  console.log("render");
+
   const wait = useRef();
 
   const [isWaiting, setIsWaiting] = useState(false);
